@@ -135,13 +135,13 @@ const Gallery = () => {
     return (
         <div
             ref={scrollContainerRef}
-            style={{ height: '100vh', overflowY: 'auto', marginLeft: '15rem' }}
+            className="h-screen overflow-y-auto ml-[12.5rem] bg-primary text-text-primary"
         >
             <div className="flex justify-center mt-8">
                 <header className="mb-6 text-center w-full">
                     <form onSubmit={handleSearch} className="flex justify-center">
                         <div className="relative w-[80%] max-w-3xl">
-                            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-neutral-400">
+                            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-placeholder">
                                 <FaSearch />
                             </span>
                             <input
@@ -149,7 +149,7 @@ const Gallery = () => {
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Search Solutions"
-                                className="w-full pl-12 pr-4 py-3 text-lg border border-neutral-700 rounded-lg bg-neutral-800 text-neutral-100 outline-none shadow focus:ring focus:ring-neutral-700 focus:border-neutral-500 transition-all duration-300"
+                                className="w-full pl-12 pr-4 py-3 text-lg border border-secondary rounded-lg bg-secondary text-text-primary outline-none shadow focus:ring focus:ring-secondary focus:border-neutral-500 transition-all duration-300"
                             />
                         </div>
                     </form>
@@ -157,18 +157,18 @@ const Gallery = () => {
             </div>
 
             {loading && page === 1 ? (
-                <div style={{ fontSize: '24px', marginTop: '100px', textAlign: 'center' }}>
+                <div className="text-2xl mt-24 text-center text-text-secondary">
                     Loading...
                 </div>
             ) : error ? (
-                <div style={{ color: 'red', textAlign: 'center', marginTop: '100px' }}>
+                <div className="text-center mt-24 text-red-500">
                     {error}
                 </div>
             ) : (
                 <div>
                     <MasonryGallery solutions={solutions} likedSolutions={likedSolutions} />
                     {loading && page > 1 && (
-                        <div style={{ textAlign: 'center', marginTop: '1rem' }}>Loading more...</div>
+                        <div className="text-center mt-4 text-text-placeholder">Loading more...</div>
                     )}
                 </div>
             )}
