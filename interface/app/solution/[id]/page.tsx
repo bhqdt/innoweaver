@@ -11,7 +11,8 @@ import JsonViewer from '@/comp/paper/JsonViewer';
 import { FaHeart } from 'react-icons/fa';
 
 const SolutionCard = () => {
-    const apiUrl = process.env.API_URL.replace(':5000', ':7700/');
+    // const apiUrl = process.env.API_URL.replace(':5000', ':7700/');
+    const apiUrl = '120.55.193.195:7700/';
     const { id } = useParams();
     const [solution, setSolution] = useState([]);
     const [citedPapersDetails, setCitedPapersDetails] = useState([]);

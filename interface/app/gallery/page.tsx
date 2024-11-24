@@ -48,7 +48,8 @@ const MasonryGallery: React.FC<MasonryGalleryProps> = ({ solutions, likedSolutio
 };
 
 const Gallery = () => {
-    const apiUrl = process.env.API_URL.replace(':5000', ':7700/');
+    // const apiUrl = process.env.API_URL.replace(':5000', ':7700/');
+    const apiUrl = '120.55.193.195:7700/';
     const [loading, setLoading] = useState(true);
     const [solutions, setSolutions] = useState([]);
     const [likedSolutions, setLikedSolutions] = useState({});

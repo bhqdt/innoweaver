@@ -7,7 +7,8 @@ import { FaSearch, FaUpload } from 'react-icons/fa';
 import Link from 'next/link';
 
 const Papers = () => {
-    const apiUrl = process.env.API_URL.replace(':5000', ':7700/');
+    // const apiUrl = process.env.API_URL.replace(':5000', ':7700/');
+    const apiUrl = '120.55.193.195:7700/';
     const [loading, setLoading] = useState(true);
     const [papers, setPapers] = useState([]);
     const [error, setError] = useState(null);
