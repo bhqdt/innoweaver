@@ -40,7 +40,6 @@ export default function Login() {
           登录
         </button>
       </div>
-
     </div>
   );
 }

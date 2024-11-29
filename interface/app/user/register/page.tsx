@@ -10,7 +10,7 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [userType, setUserType] = useState('designer');
   const router = useRouter();
-  
+
   const handleRegister = useCallback(async () => {
     const result = await fetchRegister(email, name, password, userType);
     console.log(result);
@@ -69,7 +69,6 @@ export default function Register() {
           注册
         </button>
       </div>
-
     </div>
   );
 }
