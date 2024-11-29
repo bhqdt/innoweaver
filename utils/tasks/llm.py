@@ -12,8 +12,9 @@ import time
 import requests
 from io import BytesIO
 from PIL import Image
+from typing import Dict, Any
 
-def knowledge(current_user, paper):
+def knowledge(current_user: Dict[str, Any], paper: str) -> Any:
     print(f"用户 {current_user['email']} 正在调用 /api/knowledge")
     
     load_dotenv()
@@ -29,7 +30,7 @@ def knowledge(current_user, paper):
     result = MAIN.knowledge_extraction(paper, client)
     return result
 
-def query(current_user, query, design_doc):
+def query(current_user: Dict[str, Any], query: str, design_doc: str) -> Any:
     print(f"用户 {current_user['email']} 正在调用 /api/query")
     
     load_dotenv()
@@ -47,7 +48,7 @@ def query(current_user, query, design_doc):
 
 # -------------------------------------------------------------------- #
             
-def complete(current_user, query_alaysis_result, query):
+def complete(current_user: Dict[str, Any], query_alaysis_result: Dict[str, Any], query: str) -> Any:
     print(f"用户 {current_user['email']} 正在调用 /api/complete")
     
     load_dotenv()

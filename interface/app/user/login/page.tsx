@@ -18,27 +18,25 @@ export default function Login() {
   }, [email, password, router]);
 
   return (
-    <div className="flex flex-col justify-center items-center h-screen bg-primary font-sans text-text-primary">
-      <h2 className="text-xl font-bold">登录</h2>
-      <div className="flex flex-col gap-3 w-[300px] mt-2">
+    <div className='flex flex-col justify-center items-center h-screen bg-black text-white;
+  font-family: "Inter", sans-serif'>
+      <h2>登录</h2>
+      <div className='flex flex-col gap-2.5 w-[300px] mt-[5px]'>
         <input
-          className="p-3 text-base border border-border-secondary rounded-md text-text-secondary bg-primary outline-none focus:ring-2 focus:ring-border-secondary transition-all"
+          className='text-base border text-[black] p-2.5 rounded-[5px] border-solid border-[#ccc]'
           type="email"
           placeholder="邮箱"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
-          className="p-3 text-base border border-border-secondary rounded-md text-text-secondary bg-primary outline-none focus:ring-2 focus:ring-border-secondary transition-all"
+          className='text-base border text-[black] p-2.5 rounded-[5px] border-solid border-[#ccc]'
           type="password"
           placeholder="密码"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button
-          className="bg-secondary text-text-primary rounded-md py-2 px-4 transition-colors duration-300 hover:bg-border-secondary"
-          onClick={handleLogin}
-        >
+        <button className='text-base flex-1 bg-[#888888] text-white cursor-pointer transition-[background-color] duration-[0.3s] ease-[ease] px-5 py-2.5 rounded-[5px] border-[none] hover:"bg-[#0056b3]"' onClick={handleLogin}>
           登录
         </button>
       </div>

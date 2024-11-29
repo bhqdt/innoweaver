@@ -7,31 +7,32 @@ from meilisearch import Client
 from utils.tasks.config import *
 from utils.tasks.query_load import *
 import base64
+from typing import Any, Dict, List, Optional
 
 ################################################################################
 
-def get_formatted_time():
+def get_formatted_time() -> str:
     # china_tz = timezone(timedelta(hours=8))
     # current_time = datetime.now(china_tz)
     current_time = datetime.datetime.utcnow()
     formatted_time = current_time.strftime('%Y-%m-%dT%H:%M:%SZ')
     return formatted_time
 
-def update_paper_to_meilisearch(paper):
+def update_paper_to_meilisearch(paper: Dict[str, Any]) -> None:
     if paper:
         paper = convert_objectid_to_str(paper)
         meili_client = Client('http://127.0.0.1:7700')
         index = meili_client.index('paper_id')
         index.add_documents([paper])        
 
-def update_solution_to_meilisearch(solution):
+def update_solution_to_meilisearch(solution: Dict[str, Any]) -> None:
     if solution:
         solution = convert_objectid_to_str(solution)
         meili_client = Client('http://127.0.0.1:7700')
         index = meili_client.index('solution_id')
-        task = index.add_documents([solution])        
+        index.add_documents([solution])        
         
-def update_user_to_meilisearch(user):
+def update_user_to_meilisearch(user: Dict[str, Any]) -> None:
     if user:
         user = convert_objectid_to_str(user)
         meili_client = Client('http://127.0.0.1:7700')
@@ -40,7 +41,7 @@ def update_user_to_meilisearch(user):
         
 ## Insert & Delete #############################################################
 
-def insert_solution(current_user, query, final_solution):
+def insert_solution(current_user: Dict[str, Any], query: str, final_solution: Dict[str, Any]) -> List[ObjectId]:
     results = []
     user_id = current_user.get('_id')
     solutions = final_solution['solutions']
@@ -60,7 +61,7 @@ def insert_solution(current_user, query, final_solution):
     print(f"新文档已插入，ID: {results}")
     return results
 
-def delete_solution(solution):
+def delete_solution(solution: Dict[str, Any]) -> bool:
     solution_id = solution.get('_id')
     if solution_id:
         result = solutions_collection.delete_one({'_id': ObjectId(solution_id)})
@@ -85,7 +86,7 @@ def delete_solution(solution):
 
 ## Task ########################################################################
 
-def paper_cited(papers, solution_ids):
+def paper_cited(papers: List[Dict[str, Any]], solution_ids: List[ObjectId]) -> None:
     formatted_time = get_formatted_time()
     
     for paper in papers:
@@ -107,10 +108,10 @@ def paper_cited(papers, solution_ids):
                     'time': formatted_time
                 })
             
-def like_paper(paper, user):
+def like_paper(paper: Dict[str, Any], user: Dict[str, Any]) -> None:
     paper_id = paper.get('_id')
     user_id = user.get('_id')
-    if paper_id & user_id:
+    if paper_id and user_id:
         updated_paper = papers_collection.find_one_and_update(
             {'_id': ObjectId(paper_id)},
             {'$inc': {'Liked': 1}},
@@ -125,7 +126,7 @@ def like_paper(paper, user):
             'time': get_formatted_time()
         })
 
-def like_solution(user_id: str, solution_id: str):
+def like_solution(user_id: str, solution_id: str) -> Dict[str, Any]:
     if (solution_id is None) or (user_id is None):
         return {
             'message': '失败',
@@ -170,14 +171,12 @@ def like_solution(user_id: str, solution_id: str):
 
 ## API-Key ########################################################################
 
-def validate_apikey(api_key):
+def validate_apikey(api_key: str) -> bool:
     # OpenAI API key 的格式通常为以 'sk-' 开头，并跟随 48 个字符 (字母和数字)
     pattern = r'^sk-[A-Za-z0-9]{47,48}$'
-    if re.match(pattern, api_key):
-        return True
-    return False
+    return bool(re.match(pattern, api_key))
 
-def set_apikey(current_user, api_key):
+def set_apikey(current_user: Dict[str, Any], api_key: str) -> Dict[str, Any]:
     if not validate_apikey(api_key):
         return {'error': '无效的 OpenAI API key'}, 400
     
