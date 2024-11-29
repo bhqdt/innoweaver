@@ -2,10 +2,11 @@ from bson.objectid import ObjectId
 from pymongo import MongoClient
 from utils.tasks.config import *
 from meilisearch import Client
+from typing import Dict, Any, Optional, List
 
 ## Query #######################################################################
 
-def query_solution(solution_id: str):
+def query_solution(solution_id: str) -> Optional[Dict[str, Any]]:
     solution = solutions_collection.find_one({'_id': ObjectId(solution_id)}) 
     if(solution):
         solution['id'] = solution_id
@@ -17,7 +18,7 @@ def query_solution(solution_id: str):
     else:
         return None
 
-def query_liked_solution(user_id: str, solution_id: str):
+def query_liked_solution(user_id: str, solution_id: str) -> bool:
     relations = solutions_liked_collection.find({'user_id': ObjectId(user_id)}) 
     for relation in relations:
         id = str(relation['solution_id'])
@@ -25,7 +26,7 @@ def query_liked_solution(user_id: str, solution_id: str):
             return True
     return False
 
-def query_paper(paper_id: str):
+def query_paper(paper_id: str) -> Optional[Dict[str, Any]]:
     paper = papers_collection.find_one({'_id': ObjectId(paper_id)})
     if(paper):
         paper['id'] = str(paper['_id'])
@@ -36,7 +37,7 @@ def query_paper(paper_id: str):
 
 ## Load ########################################################################
 
-def gallery(page: int = 1):
+def gallery(page: int = 1) -> List[Dict[str, Any]]:
     # solutions = solutions_collection.find()
     items_per_page = 10
     skip = (page - 1) * items_per_page
@@ -51,7 +52,7 @@ def gallery(page: int = 1):
     } for solution in solutions]
     return result
     
-def load_solutions(user_id: str, page: int = 1):
+def load_solutions(user_id: str, page: int = 1) -> List[Dict[str, Any]]:
     # solutions = solutions_collection.find({'user_email': current_user['email']}) 
     items_per_page = 10
     skip = (page - 1) * items_per_page
@@ -66,7 +67,7 @@ def load_solutions(user_id: str, page: int = 1):
     } for solution in solutions]
     return result
 
-def load_liked_solutions(user_id: str, page: int = 1):
+def load_liked_solutions(user_id: str, page: int = 1) -> List[Dict[str, Any]]:
     # relations = solutions_liked_collection.find({'user_id': ObjectId(user_id)}) 
     items_per_page = 10
     skip = (page - 1) * items_per_page
@@ -79,7 +80,7 @@ def load_liked_solutions(user_id: str, page: int = 1):
         result.append(solution)
     return result
 
-def load_paper_cited_by_solution(solution_id: str):
+def load_paper_cited_by_solution(solution_id: str) -> List[str]:
     relations = papers_cited_collection.find({'solution_id': ObjectId(solution_id)})
     
     result = []

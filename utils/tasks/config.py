@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+from typing import Dict, Any
 
 # 连接 MongoDB
 client = MongoClient('mongodb://localhost:27017/')
@@ -20,7 +21,7 @@ papers_liked_collection = db['paper_liked']
 ALLOWED_USER_TYPES = ['developer', 'designer', 'researcher']
 SECRET_KEY = "e8cc7461d54e925195f55cb0e15a4b37478cac0a8719c7bfca493105ce103dcb"  # 用于 JWT 签名的密钥
 
-def convert_objectid_to_str(data):
+def convert_objectid_to_str(data: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(data, dict):
         return {key: convert_objectid_to_str(value) for key, value in data.items()}
     elif isinstance(data, list):

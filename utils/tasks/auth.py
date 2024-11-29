@@ -5,8 +5,9 @@ from pymongo import MongoClient
 from utils.tasks.config import *
 import json
 from utils.tasks.task import update_user_to_meilisearch
+from typing import Dict, Tuple, Optional
 
-def register_user(email, name, password, user_type):
+def register_user(email: str, name: str, password: str, user_type: str) -> Tuple[Dict[str, str], int]:
     if not email or not name or not password or not user_type:
         return {'error': '邮箱、用户名、密码和账号类型是必需的'}, 400
     if user_type not in ALLOWED_USER_TYPES:
@@ -28,7 +29,7 @@ def register_user(email, name, password, user_type):
     update_user_to_meilisearch(result)
     return {'message': '注册成功'}, 201
 
-def login_user(email, password):
+def login_user(email: str, password: str) -> Tuple[Dict[str, str], int]:
     if not email or not password:
         return {'error': '邮箱和密码是必需的'}, 400
     # 查找用户
@@ -49,7 +50,7 @@ def login_user(email, password):
         'user': user_data
     }, 200
 
-def decode_token(token):
+def decode_token(token: str) -> Optional[Dict[str, Any]]:
     try:
         # 解析 JWT 令牌
         data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
