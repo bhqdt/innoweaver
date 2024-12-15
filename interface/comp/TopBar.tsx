@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import useAuthStore from '@/lib/hooks/auth-store';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { fetchSetAPIKey, fetchLogin } from '@/lib/actions';
 import { FaImages, FaFileAlt, FaCommentAlt, FaHistory, FaStar } from 'react-icons/fa';
 import { FeedbackFish } from '@feedback-fish/react'
@@ -12,19 +13,17 @@ import './TopBar.css'
 export default function TopBar() {
     const pathname = usePathname();
     const [key, setKey] = useState(0);
-    useEffect(() => {
-        setKey(prevKey => prevKey + 1);
-    }, [pathname]);
-
     const authStore = useAuthStore();
     const [showForm, setShowForm] = useState(false);
     const [userType, setUserType] = useState(null);
 
     useEffect(() => {
+        setKey(prevKey => prevKey + 1);
         if (authStore.userType) {
             setUserType(authStore.userType);
         }
-    }, [authStore.userType]);
+        setTheme(document.body.className || 'light');
+    }, [pathname, authStore.userType]);
 
     const handleLogout = () => {
         authStore.clearUserData();
@@ -66,66 +65,86 @@ export default function TopBar() {
         window.dispatchEvent(event);
     };
 
-
     return (
         <>
-            <div className="top-bar-wrapper pl-4" >
+            <motion.div
+                className="top-bar-wrapper"
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+            >
                 <div className='mt-4 w-full'>
-                    <h1 className="text-2xl font-bold mt-8 ml-2"> InnoWeaver </h1>
+                    <h1 className="text-2xl font-bold mt-8 ml-2">
+                        <span className='text-text-primary'>Inno</span>
+                        <span className='text-text-placeholder'>Weaver</span>
+                    </h1>
                     <hr style={{ width: '80%' }} className='border-border-line mt-1 ml-2' />
                 </div>
 
-                <div className="flex flex-col items-start flex-grow w-full mt-4 font-semibold text-base">
+                <div className="flex flex-col items-start flex-grow w-full mt-6 font-semibold text-lg">
                     <Link className="w-full flex items-center mb-4 p-2 rounded-2xl 
-                        text-text-primary transition-colors duration-300 hover:bg-secondary" href="/">
-                        <FaCommentAlt className='text-lg' />
+                        text-text-primary transition-colors duration-300 hover:bg-secondary"
+                        href="/"
+                    >
+                        <FaCommentAlt className='text-xl' />
                         <div className='ml-3'>
                             Chat
                         </div>
                     </Link>
                     <Link className="w-full flex items-center mb-4 p-2 rounded-2xl 
-                        text-text-primary transition-colors duration-300 hover:bg-secondary" href="/gallery">
-                        <FaImages className='text-lg' />
+                        text-text-primary transition-colors duration-300 hover:bg-secondary"
+                        href="/gallery"
+                    >
+                        <FaImages className='text-xl' />
                         <div className='ml-3'>
                             Gallery
                         </div>
                     </Link>
+
                     <Link className="w-full flex items-center mb-4 p-2 rounded-2xl 
-                        text-text-primary transition-colors duration-300 hover:bg-secondary" href="/paper">
-                        <FaFileAlt className='text-lg' />
+                        text-text-primary transition-colors duration-300 hover:bg-secondary"
+                        href="/paper"
+                    >
+                        <FaFileAlt className='text-xl' />
                         <div className='ml-3'>
                             Papers
                         </div>
                     </Link>
                 </div>
 
-                <div className="flex flex-col justify-end items-end h-full w-full font-semibold text-base">
+                <div className="flex flex-col justify-end items-end h-full w-full mb-6 font-semibold text-lg">
                     <Link className="w-full flex items-center mb-4 p-2 rounded-2xl 
-                            text-text-primary transition-colors duration-300 hover:bg-secondary" href="/user/history">
-                        <FaHistory className='text-lg' />
+                            text-text-primary transition-colors duration-300 hover:bg-secondary"
+                        href="/user/history"
+                    >
+                        <FaHistory className='text-xl' />
                         <div className='ml-3'>
                             History
                         </div>
                     </Link>
                     <Link className="w-full flex items-center mb-4 p-2 rounded-2xl 
-                            text-text-primary transition-colors duration-300 hover:bg-secondary" href="/user/favlist">
-                        <FaStar className='text-lg' />
+                            text-text-primary transition-colors duration-300 hover:bg-secondary"
+                        href="/user/favlist"
+                    >
+                        <FaStar className='text-xl' />
                         <div className='ml-3'>
                             Favorite
                         </div>
                     </Link>
                     <button
                         onClick={toggleTheme}
-                        className="relative flex items-center p-2 mb-3 text-2xl rounded-full bg-secondary transition-colors duration-300"
-                        style={{ width: '8rem' }}
+                        className="relative flex items-center p-2 mb-3 text-2xl rounded-full 
+                        bg-secondary transition-colors duration-300"
+                        style={{ width: '8rem', borderRadius: '9999px', }}
                     >
                         <div
-                            className="absolute bg-primary rounded-full shadow-md"
+                            className="absolute bg-primary shadow-md"
                             style={{
                                 width: '2.5rem',
                                 height: '2.5rem',
                                 transform: theme === "dark" ? "translateX(0)" : "translateX(4.5rem)",
                                 transition: "transform 0.3s ease, background-color 0.3s ease",
+                                borderRadius: '9999px',
                             }}
                         ></div>
                         <div className="flex justify-between w-full px-2">
@@ -136,11 +155,11 @@ export default function TopBar() {
                 </div>
 
                 <FeedbackFish projectId="99f3739e6a24ef" userId={authStore.email}>
-                    <button className='ml-6 mb-6 font-semibold' style={{ color: '#00FFFF' }}>
+                    <button className='ml-6 mb-6 font-semibold text-lg' style={{ color: '#00FFFF' }}>
                         反馈
                     </button>
                 </FeedbackFish>
-            </div>
+            </motion.div>
 
             <div className="user-bar-wrapper">
                 <div className='flex flex-col w-full' style={{ alignItems: "flex-end" }}>
@@ -150,7 +169,6 @@ export default function TopBar() {
                     {showForm && (
                         <div className="form-wrapper">
                             <div className="form-container">
-                                {/* 用户信息显示区域 */}
                                 {["email", "name", "userType"].map((field) => (
                                     <div key={field} className="user-info-container">
                                         <p>
@@ -160,7 +178,6 @@ export default function TopBar() {
                                     </div>
                                 ))}
 
-                                {/* API 输入和保存区域 */}
                                 <div className="api-container">
                                     <p>API:</p>
                                     <input
@@ -175,7 +192,6 @@ export default function TopBar() {
                                     </button>
                                 </div>
 
-                                {/* 登录/登出按钮 */}
                                 <div className="buttons-container">
                                     {localStorage.getItem('token') ? (
                                         <button

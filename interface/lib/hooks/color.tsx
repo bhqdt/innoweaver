@@ -18,8 +18,10 @@ export function GetColor(index: number, scale: number): string {
     ];
 
     const themeColor = getComputedStyle(document.documentElement)
-    .getPropertyValue('--text-primary')
-    .trim();
-    const cardColor = tinycolor.mix(colorPalette[index % colorPalette.length], themeColor, scale).toHexString();
-    return cardColor;
-};
+        .getPropertyValue('--text-primary')
+        .trim() || '#FFFFFF';
+
+    const baseColor = colorPalette[index % colorPalette.length];
+    const mixedColor = tinycolor.mix(baseColor, themeColor, scale).toHexString();
+    return mixedColor;
+}

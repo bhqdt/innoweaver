@@ -15,7 +15,8 @@ const FavList = () => {
     }, []);
 
     return (
-        <div className="flex justify-center bg-primary text-text-primary font-sans min-h-full">
+        <div className="flex justify-center bg-primary text-text-primary font-sans min-h-full transition-colors duration-300"
+            style={{ height: '100vh' }}>
             <GalleryPage title="My Favorite" fetchData={fetchLoadLikedSolutions} />
         </div>
     );

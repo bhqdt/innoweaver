@@ -1,5 +1,29 @@
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+  
+@keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
 .top-bar-wrapper {
-    @apply fixed w-[12.5rem] h-screen bg-primary z-[1000] flex flex-col justify-start items-start text-text-primary shadow-primary left-0 top-0 transition-colors duration-300;
+    @apply fixed w-[12.5rem] h-screen bg-primary z-[1000] flex flex-col justify-start items-start text-text-primary left-0 top-0 transition-all duration-300 pl-4;
+    /* position: fixed;
+    top: 0;
+    left: 0;
+    width: 12.5rem;
+    height: 100vh;
+    background-color: white;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    color: #FFFFFF;
+    box-shadow: 0 1px 10px rgba(255, 255, 255, 0.5);
+    padding-left: 1rem */
 }
 
 .user-bar-wrapper {
@@ -20,6 +44,7 @@
 
 .form-wrapper {
     @apply absolute top-[3.13rem] right-[3.13rem] w-80 p-5 bg-secondary rounded-xl text-sm z-[999] shadow-lg transition-colors duration-300;
+    animation: fadeIn 0.3s ease-out;
 }
 
 .form-container, .user-info-container, .api-container {

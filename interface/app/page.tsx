@@ -1,47 +1,68 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import * as React from 'react';
 import { useDropzone } from 'react-dropzone';
-import { FaUpload, FaArrowCircleUp, FaFileImage, FaFilePdf, FaFileWord, FaFileAlt, FaRedo, FaSearch } from 'react-icons/fa';
+import {
+  FaUpload,
+  FaArrowCircleUp,
+  FaFileImage,
+  FaFilePdf,
+  FaFileWord,
+  FaFileExcel,
+  FaFileCode,
+  FaFileAlt,
+  FaRedo,
+} from 'react-icons/fa';
+import Box from '@mui/material';
 import Textarea from 'react-textarea-autosize';
 import MiniCard from '@/comp/solution/MiniCard';
-import { fetchQueryAnalysis, fetchComplete, fetchQuerySolution } from "@/lib/actions";
+import {
+  fetchQueryAnalysis,
+  fetchComplete,
+  fetchQuerySolution,
+} from "@/lib/actions";
 import CircularProgress from '@mui/material/CircularProgress';
 import { LinearProgress } from '@mui/material';
-import { customFetch } from '@/lib/actions/customFetch';
 import FileUploader from '@/comp/FileUploader';
-
 import PaperSearch from '@/comp/main/PaperSearch';
 import SolutionSearch from '@/comp/main/SolutionSearch';
+// import * as pdfjsLib from 'pdfjs-dist';
+import mammoth from 'mammoth';
+
+// Set the workerSrc to the CDN URL with the correct version
+// pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.min.mjs'
 
 const renderAnalysisResult = (analysisResult, handleQueryAnalysis) => {
   return (
-    <div className="p-4 bg-secondary rounded-lg text-sm font-normal">
-      <button className="absolute top-15 right-8 cursor-pointer" onClick={handleQueryAnalysis}>
+    <div className="p-4 bg-secondary rounded-lg text-sm font-normal relative">
+      <button className="absolute top-2 right-2 cursor-pointer" onClick={handleQueryAnalysis}>
         <FaRedo className="text-gray-400 hover:text-gray-100 text-xl" />
       </button>
 
-      <p>
-        <span className="text-gray-500 font-bold">TARGET USER:</span>
-        <span className="ml-2"> {analysisResult['Targeted User'] || 'N/A'} </span>
-      </p>
-      <br />
+      <div className='overflow-auto'>
+        <p>
+          <span className="text-gray-500 font-bold">TARGET USER:</span>
+          <span className="ml-2"> {analysisResult['Targeted User'] || 'N/A'} </span>
+        </p>
+        <br />
 
-      <p>
-        <span className="text-gray-500 font-bold">USAGE SCENARIO:</span>
-        <span className="ml-2"> {analysisResult['Usage Scenario'] || 'N/A'} </span>
-      </p>
-      <br />
+        <p>
+          <span className="text-gray-500 font-bold">USAGE SCENARIO:</span>
+          <span className="ml-2"> {analysisResult['Usage Scenario'] || 'N/A'} </span>
+        </p>
+        <br />
 
-      <p>
-        <span className="text-gray-500 font-bold">REQUIREMENTS:</span>
-        <span className="ml-2">
-          {Array.isArray(analysisResult['Requirement'])
-            ? analysisResult['Requirement'].join(', ')
-            : 'N/A'}
-        </span>
-      </p>
+        <p>
+          <span className="text-gray-500 font-bold">REQUIREMENTS:</span>
+          <span className="ml-2">
+            {Array.isArray(analysisResult['Requirement'])
+              ? analysisResult['Requirement'].join(', ')
+              : 'N/A'}
+          </span>
+        </p>
+      </div>
+
     </div>
   );
 };
@@ -70,32 +91,76 @@ const GenerateSolution = () => {
 
   // ---------------------------------------------------------------------------------- //
 
+  const getFileExtension = (fileName: string) => {
+    return fileName.slice(((fileName.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase();
+  };
+
   const renderFileIcon = (file: File) => {
-    const fileType = file.type;
-    if (fileType.startsWith("image/")) return <FaFileImage className="text-blue-500 text-2xl" />;
-    if (fileType === "application/pdf") return <FaFilePdf className="text-red-500 text-2xl" />;
-    if (fileType.includes("word")) return <FaFileWord className="text-blue-700 text-2xl" />;
-    return <FaFileAlt className="text-gray-500 text-2xl" />;
+    const extension = getFileExtension(file.name);
+
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'bmp':
+        return <FaFileImage className="text-blue-500 text-2xl" />;
+      // case 'pdf':
+      //   return <FaFilePdf className="text-red-500 text-2xl" />;
+      case 'doc':
+      case 'docx':
+        return <FaFileWord className="text-blue-700 text-2xl" />;
+      case 'xls':
+      case 'xlsx':
+        return <FaFileExcel className="text-green-500 text-2xl" />;
+      case 'md':
+        return <FaFileCode className="text-purple-500 text-2xl" />;
+      case 'txt':
+        return <FaFileAlt className="text-gray-500 text-2xl" />;
+      default:
+        return <FaFileAlt className="text-gray-500 text-2xl" />;
+    }
   };
 
   // Handle file drop
-  const { getRootProps, getInputProps, acceptedFiles } = useDropzone({
+  const { getRootProps, getInputProps } = useDropzone({
     onDrop: (acceptedFiles) => {
-      // setFiles(['']);
       if (acceptedFiles.length > 0) {
         setFiles([acceptedFiles[0]]);
       }
-    }
+    },
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.bmp'],
+      // 'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'text/markdown': ['.md'],
+      'text/plain': ['.txt'],
+    },
   });
 
   // ---------------------------------------------------------------------------------- //
 
   const [analysisResult, setAnalysisResult] = useState('');
   const [isAnalysisLoading, setIsAnalysisLoading] = useState(false);
-  const callQueryAnalysis = async (inputText, files, setAnalysisResult, setIsAnalysisLoading) => {
+
+  const callQueryAnalysis = async (
+    inputText: string,
+    files: File[],
+    setAnalysisResult: React.Dispatch<React.SetStateAction<any>>,
+    setIsAnalysisLoading: React.Dispatch<React.SetStateAction<boolean>>
+  ) => {
     try {
       setIsAnalysisLoading(true);
-      const analysisResult = await fetchQueryAnalysis(inputText, files[0]);
+      let fileContent = '';
+      if (files && files.length > 0) {
+        const file = files[0];
+        fileContent = await readFileContent(file);
+        console.log(fileContent);
+      }
+      const analysisResult = await fetchQueryAnalysis(inputText, fileContent);
       const result = JSON.parse(analysisResult);
       console.log('Analysis result:', result);
       setAnalysisResult(result);
@@ -104,6 +169,74 @@ const GenerateSolution = () => {
     } finally {
       setIsAnalysisLoading(false);
     }
+  };
+
+  const readFileContent = async (file: File): Promise<string> => {
+    const extension = getFileExtension(file.name);
+
+    if (extension === 'txt' || extension === 'md') {
+      return new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const result = event.target?.result;
+          if (typeof result === 'string') {
+            resolve(result);
+          } else {
+            reject(new Error('File content is not a string.'));
+          }
+        };
+        reader.onerror = (error) => {
+          reject(error);
+        };
+        reader.readAsText(file);
+      });
+    }
+    // else if (extension === 'pdf') {
+    //   return await extractTextFromPDF(file);
+    // } 
+    else if (extension === 'docx' || extension === 'doc') {
+      return await extractTextFromDocx(file);
+    } else {
+      throw new Error('Unsupported file type.');
+    }
+  };
+
+  // const extractTextFromPDF = async (file: File): Promise<string> => {
+  //   const loadingTask = pdfjsLib.getDocument({ url: URL.createObjectURL(file) });
+  //   const pdf = await loadingTask.promise;
+  //   let textContent = '';
+
+  //   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+  //     const page = await pdf.getPage(pageNum);
+  //     const text = await page.getTextContent();
+  //     const pageText = text.items.map((item: any) => item.str).join(' ');
+  //     textContent += pageText + '\n';
+  //   }
+
+  //   return textContent;
+  // };
+
+  const extractTextFromDocx = async (file: File): Promise<string> => {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const arrayBuffer = event.target?.result;
+        if (arrayBuffer instanceof ArrayBuffer) {
+          try {
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            resolve(result.value);
+          } catch (error) {
+            reject(error);
+          }
+        } else {
+          reject(new Error('Could not read file as ArrayBuffer.'));
+        }
+      };
+      reader.onerror = (error) => {
+        reject(error);
+      };
+      reader.readAsArrayBuffer(file);
+    });
   };
 
   const handleQueryAnalysis = () => {
@@ -120,7 +253,6 @@ const GenerateSolution = () => {
 
   async function callStepApi(url, data) {
     const apiUrl = process.env.API_URL;
-    // const apiUrl = "http://120.55.193.195:5001";
     const token = localStorage.getItem("token");
     try {
       const headers = {
@@ -128,50 +260,18 @@ const GenerateSolution = () => {
         ...(token && { "Authorization": `Bearer ${token}` }),
       };
       const body = JSON.stringify(data);
-      const response = await fetch(`${apiUrl}${url}`, { method: 'POST', headers: headers, body: body, });
+      const response = await fetch(`${apiUrl}${url}`, { method: 'POST', headers: headers, body: body });
       const result = await response.json();
 
       console.log(result);
       setProgress(result.progress);
       setStatusMessage(result.status);
 
-      return result
+      return result;
     } catch (error) {
       console.error(`Error in ${url}:`, error);
       throw error;
     }
-  }
-
-  async function pollTaskStatus(taskId) {
-    const apiUrl = `http://120.55.193.195:5001/api/complete/status/${taskId}`;
-
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(apiUrl, { method: 'GET' });
-        const result = await response.json();
-
-        setProgress(result.progress);
-        setStatusMessage(result.status);
-        console.log(result);
-        console.log(result.status);
-
-        if (result.status === "completed") {
-          clearInterval(interval);  // 停止轮询
-          // setCompleteResult(result);
-          setIsCompleteLoading(false);
-          // console.log("Task completed:", result);
-        } else if (result.status === "error" || result.status === "unknown") {
-          clearInterval(interval);  // 停止轮询
-          setStatusMessage("Task failed");
-          console.error("Task error:", result);
-          setIsCompleteLoading(false);
-        }
-      } catch (error) {
-        console.error("Error while polling task status:", error);
-        clearInterval(interval);
-        setIsCompleteLoading(false);
-      }
-    }, 2000); // 每2秒轮询一次
   }
 
   const handleGenerate = async () => {
@@ -184,13 +284,11 @@ const GenerateSolution = () => {
       console.log("init:", initResponse);
 
       const mode = selectedMode;
-      if (mode == "solution") {
+      if (mode === "inspirtaion") {
         await callStepApi('/api/complete/example', { task_id: initResponse.task_id, data: JSON.stringify(selectedIds) });
-      }
-      else if (mode == "paper") {
+      } else if (mode === "paper") {
         await callStepApi('/api/complete/paper', { task_id: initResponse.task_id, data: JSON.stringify(selectedIds) });
-      }
-      else {
+      } else {
         await callStepApi('/api/complete/rag', { task_id: initResponse.task_id });
       }
 
@@ -266,7 +364,7 @@ const GenerateSolution = () => {
   // ---------------------------------------------------------------------------------- //
 
   return (
-    <div className='flex justify-center bg-primary text-text-primary min-h-full ml-48'>
+    <div className='flex ml-[12.5rem] justify-center bg-primary text-text-primary min-h-full transition-colors duration-300'>
       <div className='flex w-[85rem] min-h-screen flex-col items-center justify-center'>
         <div className='flex w-full h-[45rem] bg-secondary rounded-2xl'>
 
@@ -275,101 +373,123 @@ const GenerateSolution = () => {
               <div className='text-text-secondary text-2xl font-semibold ml-5 mt-2'>Input</div>
 
               <select
-                className='mr-5 mt-2 p-2 rounded-md bg-secondary text-text-secondary'
+                className='mr-5 mt-2 p-2 rounded-md bg-secondary text-text-secondary font-semibold'
                 value={selectedMode}
                 onChange={handleModeChange}
               >
-                <option value="chat">Chat</option>
-                <option value="solution">Solution</option>
-                <option value="paper">Paper</option>
+                <option value="chat" className='font-semibold'>Chat</option>
+                <option value="inspirtaion" className='font-semibold'>Inspirtaion</option>
+                {/* <option value="paper">Paper</option> */}
               </select>
             </div>
 
-            <div className='flex flex-col items-center mt-2 ml-5 mr-5 h-[92.5%] rounded-lg'>
-              <div className='flex w-full h-1/3 items-center justify-center overflow-auto'>
-                <div className='flex h-full w-full items-center justify-center flex-col rounded-lg 
-                                    text-xl font-semibold text-text-placeholder gap-4'>
-                  <>
-                    {isAnalysisLoading ? (
-                      <div className="flex justify-center items-center">
-                        <CircularProgress />
-                      </div>
-                    ) : analysisResult ? (
-                      renderAnalysisResult(analysisResult, handleQueryAnalysis)
-                    ) : (
-                      <div></div>
-                    )}
-                  </>
-                </div>
-              </div>
-              <div {...getRootProps()}
-                className='flex flex-col w-full items-center justify-center
-                    rounded-lg text-lg mt-2 border-2 border-dashed border-neutral-600 
-                    p-5 bg-secondary hover:bg-secondary transition-all duration-300'
-                style={{ height: '12rem' }}
-              >
-                <input {...getInputProps()} />
-                {files.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center text-center text-text-placeholder">
-                    <p className="mb-2 text-base">Drag & drop files here, or click to select files</p>
-                    <p className="text-sm text-text-secondary font-bold">(Only Support .txt)</p>
+            <div className='flex flex-col items-center mt-2 ml-5 mr-5 h-5/6 rounded-lg gap-4'>
+              <div className="flex-1 h-1/3 rounded-lg ">
+                {isAnalysisLoading ? (
+                  <div className="flex justify-center items-center h-full">
+                    <CircularProgress />
                   </div>
+                ) : analysisResult ? (
+                  renderAnalysisResult(analysisResult, handleQueryAnalysis)
                 ) : (
-                  <div className="flex flex-col items-center w-full">
-                    {files.map((file, index) => (
-                      <div key={index} className="flex items-center justify-center w-full h-full text-text-secondary">
-                        {renderFileIcon(file)}
-                        <span className="ml-3 text-2xl font-semibold truncate">{file.name}</span>
-                      </div>
-                    ))}
-                  </div>
+                  <div className="h-full"></div>
                 )}
               </div>
 
-              <div className='flex flex-col h-1/3 w-full rounded-lg m-4'>
-                <div className='rounded-lg h-5/6 p-4 bg-secondary'>
-                  <Textarea
-                    className="w-full bg-transparent text-text-primary placeholder-text-placeholder"
-                    placeholder="Please type your question here..."
-                    minRows={6}
-                    maxRows={6}
-                    spellCheck={false}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    onChange={(e) => setInputText(e.target.value)}
-                  />
+              <div className='flex w-full h-1/3 rounded-lg items-center justify-center
+                border-2 border-dashed border-neutral-600 cursor-pointer hover:bg-secondary-hover
+                bg-secondary transition-all duration-300 mt-2'>
+                <div {...getRootProps()}>
+                  <input {...getInputProps()} />
+                  {files.length === 0 ? (
+                    <div className="text-center text-text-placeholder">
+                      <p className="mb-2">Drag & drop files here, or click to select files</p>
+                      <p className="text-sm font-bold text-text-secondary">(Supports .txt, .docx, .md, .xlsx)</p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center w-full">
+                      {files.map((file, index) => (
+                        <div key={index} className="flex items-center justify-center w-full">
+                          {renderFileIcon(file)}
+                          <span className="ml-3 text-lg font-semibold truncate">{file.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
+              </div>
 
-                {analysisResult ? (
-                  <div className='w-full flex justify-between mt-2'>
-                    <button className='text-text-secondary mr-2 text-lg font-bold
-                                        bg-secondary px-4 py-1 rounded-md'
-                      onClick={handleGenerate}>
-                      <p>Generate!</p>
-                    </button>
-                    <button className='text-text-primary mr-2' onClick={handleSendMessage}>
-                      <FaArrowCircleUp className='text-3xl' />
-                    </button>
-                  </div>
-                ) : (
-                  <div className='w-full flex justify-end mt-2'>
-                    <button className='text-text-primary mr-2' onClick={handleSendMessage}>
-                      <FaArrowCircleUp className='text-3xl' />
-                    </button>
-                  </div>
-                )}
+              {/* <div className='flex w-full h-1/3 rounded-lg items-center justify-center 
+                bg-secondary transition-all duration-300'>
+                <Textarea
+                  className="w-full bg-transparent text-text-primary placeholder:text-gray-400 p-2
+                  placeholder-opacity-75 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
+                  placeholder="Please type your question here..."
+                  minRows={6}
+                  maxRows={6}
+                  spellCheck={false}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  aria-label="Type your question here"
+                  onChange={(e) => setInputText(e.target.value)}
+                />
+              </div> */}
+              <div className="flex-1 w-full rounded-lg bg-secondary items-center justify-center">
+                <Textarea
+                  className="w-full h-full bg-transparent text-text-primary placeholder:text-gray-400 p-2 
+                    placeholder-opacity-75 focus:ring focus:ring-blue-500 focus:ring-opacity-50 resize-none"
+                  placeholder="Please type your question here..."
+                  minRows={6}
+                  maxRows={6}
+                  spellCheck={false}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  aria-label="Type your question here"
+                  onChange={(e) => setInputText(e.target.value)}
+                />
               </div>
             </div>
 
+            {analysisResult ? (
+              <div className='w-full flex justify-between mt-2'>
+                <button className='text-text-secondary ml-5 text-lg font-bold
+                                        bg-secondary px-4 rounded-md'
+                  onClick={handleGenerate}>
+                  <p>Generate!</p>
+                </button>
+                <button className='text-text-primary mr-6' onClick={handleSendMessage}>
+                  <FaArrowCircleUp className='text-3xl' />
+                </button>
+              </div>
+            ) : (
+              <div className='w-full flex justify-end mt-2'>
+                <button className='text-text-primary mr-6' onClick={handleSendMessage}>
+                  <FaArrowCircleUp className='text-3xl' />
+                </button>
+              </div>
+            )}
           </div>
 
           <div className='relative w-2/3 m-6 rounded-lg bg-primary overflow-auto'>
             <div className="flex w-full h-full">
               {isCompleteLoading ? (
-                <div className="flex flex-col w-full h-full justify-center items-center">
-                  <div style={{ width: '80%', marginTop: '20px' }}>
-                    <LinearProgress variant="determinate" value={progress} />
-                    <p>{progress}%</p>
+                // <div className="flex flex-col w-full h-full justify-center items-center">
+                //   <div style={{ width: '80%', marginTop: '20px' }}>
+                //     <LinearProgress variant="determinate" value={progress} />
+                //     <p>{progress}%</p>
+                //   </div>
+                // </div>
+                <div className="flex flex-col justify-center items-center h-full w-full">
+                  <div className="w-4/5 mt-2">
+                    <div className="flex items-center mt-1">
+                      <div className="w-full mr-1">
+                        <LinearProgress variant="determinate" value={progress} />
+                      </div>
+                      <div className="min-w-[35px]">
+                        <p className="text-sm text-gray-500">{`${Math.round(progress)}%`}</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">{statusMessage}</p>
                   </div>
                 </div>
               ) : completeResult ? (
@@ -411,14 +531,14 @@ const GenerateSolution = () => {
                         </div>
                       ))
                     ) : (
-                      <p className="text-lg text-text-placeholder">No solutions available.</p>
+                      <p className="text-base sm:text-lg text-text-placeholder">No inspirations available.</p>
                     )}
 
                   </div>
                 </div>
               ) : (
                 <div className="flex w-full h-full justify-center items-center">
-                  {selectedMode === 'solution' && (
+                  {selectedMode === 'inspirtaion' && (
                     <SolutionSearch onSelectionChange={handleIDSelection} />
                   )}
 
@@ -426,7 +546,7 @@ const GenerateSolution = () => {
                     <PaperSearch onSelectionChange={handleIDSelection} />
                   )}
 
-                  {(selectedMode !== 'solution' && selectedMode !== 'paper') && (
+                  {(selectedMode !== 'inspirtaion' && selectedMode !== 'paper') && (
                     <p className='font-bold text-4xl'>No result available yet.</p>
                   )}
                 </div>

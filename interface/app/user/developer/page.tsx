@@ -49,7 +49,7 @@ export default function ViewPrompts() {
     };
 
     return (
-        <div className='user_history_container'>
+        <div className='user_history_container bg-primary transition-colors duration-300'>
             {/* 下拉选择提示词 */}
             <div className='prompts_container'>
                 {Object.entries(prompts).map(([promptName, promptContent]) => {

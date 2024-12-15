@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { MeiliSearch } from 'meilisearch';
 import MiniCard from '@/comp/solution/MiniCard';
 import Masonry from 'react-masonry-css';
@@ -48,32 +49,51 @@ const MasonryGallery: React.FC<MasonryGalleryProps> = ({ solutions, likedSolutio
 };
 
 const Gallery = () => {
-    // const apiUrl = process.env.API_URL.replace(':5000', ':7700/');
-    const apiUrl = '120.55.193.195:7700/';
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
+    const page = searchParams.get('page') || '1';  // Default to page 1
+    const query = searchParams.get('query') || '';  // Default to an empty query string
+    const pageNumber = parseInt(page, 20);  // Convert page number to an integer
+    const [queryState, setQuery] = useState(query);
+
     const [loading, setLoading] = useState(true);
     const [solutions, setSolutions] = useState([]);
     const [likedSolutions, setLikedSolutions] = useState({});
     const [error, setError] = useState(null);
-
-    const [query, setQuery] = useState('');
-    const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [totalPages, setTotalPages] = useState(0);
 
-    const scrollContainerRef = useRef(null);
-
+    const apiUrl = '120.55.193.195:7700/';
     const client = useMemo(() => new MeiliSearch({ host: apiUrl }), [apiUrl]);
+
+    const fetchSolutionCount = useCallback(async (searchQuery = '') => {
+        try {
+            const index = client.index('solution_id');
+            const searchResults = await index.search(searchQuery, {
+                limit: 0,  // 不需要返回实际的文档，只需要获取总数
+            });
+            return searchResults.estimatedTotalHits;
+        } catch (error) {
+            setError('Error fetching solution count');
+            return 0;
+        }
+    }, [client]);
+
     const fetchSolutions = useCallback(async (searchQuery = '', pageNumber = 1) => {
         setLoading(true);
         try {
-            const index = client.index('solution_id');
-            // const keywords = searchQuery.trim().split(/\s+/);
+            const totalCount = await fetchSolutionCount(searchQuery);
+            console.log(totalCount);
+            setTotalPages(Math.ceil(totalCount / 20) - 2);
 
-            // await index.updateSortableAttributes(['timestamp']);
+            const index = client.index('solution_id');
             const searchResults = await index.search(searchQuery, {
-                limit: 10,
-                offset: (pageNumber - 1) * 10,
+                limit: 20,
+                offset: (pageNumber - 1) * 20,
                 sort: ['timestamp:desc'],
             });
+
             if (searchResults.hits.length > 0) {
                 const modifiedResults = searchResults.hits.map((hit) => ({
                     ...hit,
@@ -81,17 +101,19 @@ const Gallery = () => {
                     _id: undefined,
                 }));
 
-                setSolutions((prevPapers) => (pageNumber === 1 ? modifiedResults : [...prevPapers, ...modifiedResults]));
+                setSolutions((prevSolutions) =>
+                    pageNumber === 1 ? modifiedResults : [...prevSolutions, ...modifiedResults]
+                );
 
                 const solutionIds = modifiedResults.map(solution => solution.id);
                 const likedStatuses = await fetchQueryLikedSolutions(solutionIds);
-                console.log(likedStatuses);
 
                 const newLikedStates = likedStatuses.reduce((acc, { solution_id, isLiked }) => {
                     acc[solution_id] = isLiked;
                     return acc;
                 }, {});
-                setLikedSolutions(prevLiked => ({
+
+                setLikedSolutions((prevLiked) => ({
                     ...prevLiked,
                     ...newLikedStates,
                 }));
@@ -101,45 +123,92 @@ const Gallery = () => {
                 setHasMore(false);
             }
         } catch (error) {
-            setError('Error fetching papers');
+            setError('Error fetching solutions');
         } finally {
             setLoading(false);
         }
-    }, [client]);
+    }, [client, fetchSolutionCount]);
+
+    // Reset the solutions and liked solutions when query or page changes
+    useEffect(() => {
+        setSolutions([]);  // Clear existing solutions
+        setLikedSolutions({});  // Clear liked solutions
+        setHasMore(true);  // Reset "has more" flag
+        setLoading(true);  // Start loading state
+
+        fetchSolutions(queryState, pageNumber);  // Fetch new data based on query and page
+    }, [queryState, pageNumber, fetchSolutions]);
 
     useEffect(() => {
-        fetchSolutions(query, page);
-    }, [query, page, fetchSolutions]);
+        if (queryState) {
+            router.push(`/gallery?page=1&query=${queryState}`);
+        } else {
+            router.push(`/gallery?page=1`);  // Clear query if it's empty
+        }
+    }, [queryState, router]);
 
     const handleSearch = (e) => {
         e.preventDefault();
-        setPage(1);
-        setSolutions([]);
-        fetchSolutions(query, 1);
+        if (queryState) {
+            router.push(`/gallery?page=1&query=${queryState}`); // Update the query in the URL
+        } else {
+            router.push(`/gallery?page=1`);  // Clear query if it's empty
+        }
     };
 
-    useEffect(() => {
-        const handleScroll = () => {
-            if (scrollContainerRef.current) {
-                const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-                if (scrollTop + clientHeight >= scrollHeight - 50 && !loading && hasMore) {
-                    setPage((prevPage) => prevPage + 1);
-                }
-            }
-        };
+    const handlePageChange = (newPage) => {
+        if (newPage <= totalPages && newPage > 0) {
+            router.push(`/gallery?page=${newPage}&query=${queryState}`);
+        }
+    };
 
-        const container = scrollContainerRef.current;
-        container?.addEventListener('scroll', handleScroll);
-        return () => container?.removeEventListener('scroll', handleScroll);
-    }, [loading, hasMore]);
+    const handlePageInputChange = (e) => {
+        const newPage = parseInt(e.target.value, 10);
+        if (!isNaN(newPage) && newPage >= 1 && newPage <= totalPages) {
+            router.push(`/gallery?page=${newPage}&query=${queryState}`);
+        }
+    };
+
+    const renderPagination = () => {
+        const pagesToShow = [];
+        const range = 3; // Number of pages to show on either side of the current page
+        let startPage = Math.max(1, pageNumber - range);
+        let endPage = Math.min(totalPages, pageNumber + range);
+
+        if (startPage > 1) {
+            pagesToShow.push(1);
+            if (startPage > 2) pagesToShow.push('...');
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            pagesToShow.push(i);
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) pagesToShow.push('...');
+            pagesToShow.push(totalPages);
+        }
+
+        return pagesToShow.map((page, index) => (
+            <React.Fragment key={index}>
+                {page === '...' ? (
+                    <span className="px-4 py-2">...</span>
+                ) : (
+                    <button
+                        onClick={() => handlePageChange(page)}
+                        className={`px-4 py-2 border rounded-lg ${page === pageNumber ? 'bg-secondary text-text-primary' : 'bg-primary text-text-secondary'}`}
+                    >
+                        {page}
+                    </button>
+                )}
+            </React.Fragment>
+        ));
+    };
 
     return (
-        <div
-            ref={scrollContainerRef}
-            className="h-screen overflow-y-auto ml-[12.5rem] bg-primary text-text-primary"
-        >
-            <div className="flex justify-center mt-8">
-                <header className="mb-6 text-center w-full">
+        <div className="h-screen overflow-y-auto ml-[12.5rem] bg-primary text-text-primary transition-colors duration-300">
+            <div className="flex justify-center mt-8 mb-2">
+                <header className="text-center w-full">
                     <form onSubmit={handleSearch} className="flex justify-center">
                         <div className="relative w-[80%] max-w-3xl">
                             <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-placeholder">
@@ -147,9 +216,9 @@ const Gallery = () => {
                             </span>
                             <input
                                 type="text"
-                                value={query}
+                                value={queryState}
                                 onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Search Solutions"
+                                placeholder="Search Inspirtaions"
                                 className="w-full pl-12 pr-4 py-3 text-lg border border-secondary rounded-lg bg-secondary text-text-primary outline-none shadow focus:ring focus:ring-secondary focus:border-neutral-500 transition-all duration-300"
                             />
                         </div>
@@ -157,7 +226,7 @@ const Gallery = () => {
                 </header>
             </div>
 
-            {loading && page === 1 ? (
+            {loading && pageNumber === 1 ? (
                 <div className="text-2xl mt-24 text-center text-text-secondary">
                     Loading...
                 </div>
@@ -168,13 +237,49 @@ const Gallery = () => {
             ) : (
                 <div>
                     <MasonryGallery solutions={solutions} likedSolutions={likedSolutions} />
-                    {loading && page > 1 && (
+                    {loading && pageNumber > 1 && (
                         <div className="text-center mt-4 text-text-placeholder">Loading more...</div>
                     )}
+
+                    {/* Pagination Controls */}
+                    <div className="flex justify-center mt-2 mb-6 space-x-2">
+                        <button
+                            onClick={() => handlePageChange(pageNumber - 1)}
+                            disabled={pageNumber === 1}
+                            className="px-4 py-2 border rounded-lg bg-primary text-text-primary"
+                        >
+                            Previous
+                        </button>
+                        {renderPagination()}
+                        {/* <div className="flex justify-center mt-4">
+                            <input
+                                type="number"
+                                min="1"
+                                max={totalPages}
+                                value={pageNumber}
+                                onChange={handlePageInputChange}
+                                className="px-4 py-2 border rounded-lg bg-primary text-text-primary"
+                            />
+                        </div> */}
+
+                        <button
+                            onClick={() => handlePageChange(pageNumber + 1)}
+                            disabled={pageNumber === totalPages}
+                            className="px-4 py-2 border rounded-lg bg-primary text-text-primary"
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
             )}
         </div>
     );
 };
 
-export default Gallery;
+const GalleryPage = () => (
+    <Suspense fallback={<div>Loading gallery...</div>}>
+        <Gallery />
+    </Suspense>
+);
+
+export default GalleryPage;

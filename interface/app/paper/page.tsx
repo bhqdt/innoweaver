@@ -5,11 +5,12 @@ import { MeiliSearch } from 'meilisearch';
 import JsonViewer from '@/comp/paper/JsonViewer';
 import { FaSearch, FaUpload } from 'react-icons/fa';
 import Link from 'next/link';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const Papers = () => {
     // const apiUrl = process.env.API_URL.replace(':5000', ':7700/');
     const apiUrl = '120.55.193.195:7700/';
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [papers, setPapers] = useState([]);
     const [error, setError] = useState(null);
     const [query, setQuery] = useState('');
@@ -29,7 +30,7 @@ const Papers = () => {
             });
             if (searchResults.hits.length > 0) {
                 setPapers((prevPapers) => (pageNumber === 1 ? searchResults.hits : [...prevPapers, ...searchResults.hits]));
-                setHasMore(true);
+                setHasMore(searchResults.hits.length === 10);
             } else {
                 setHasMore(false);
             }
@@ -44,26 +45,38 @@ const Papers = () => {
         e.preventDefault();
         setPage(1);
         setPapers([]);
+        setHasMore(true);
 
-        if (query != '') {
+        if (query !== '') {
             fetchPapers(query, 1);
         }
     };
 
-    useEffect(() => {
-        const handleScroll = () => {
-            if (scrollContainerRef.current) {
-                const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-                if (scrollTop + clientHeight >= scrollHeight - 50 && !loading && hasMore) {
-                    setPage((prevPage) => prevPage + 1);
-                }
+    const handleScroll = useCallback(() => {
+        if (
+            scrollContainerRef.current &&
+            scrollContainerRef.current.scrollTop + scrollContainerRef.current.clientHeight >=
+            scrollContainerRef.current.scrollHeight - 5
+        ) {
+            if (!loading && hasMore) {
+                setPage((prevPage) => prevPage + 1);
             }
-        };
-
-        const container = scrollContainerRef.current;
-        container?.addEventListener('scroll', handleScroll);
-        return () => container?.removeEventListener('scroll', handleScroll);
+        }
     }, [loading, hasMore]);
+
+    useEffect(() => {
+        const container = scrollContainerRef.current;
+        if (container) {
+            container.addEventListener("scroll", handleScroll);
+            return () => container.removeEventListener("scroll", handleScroll);
+        }
+    }, [handleScroll]);
+
+    useEffect(() => {
+        if (query !== '' && page > 1) {
+            fetchPapers(query, page);
+        }
+    }, [page, query, fetchPapers]);
 
     return (
         <div
@@ -98,32 +111,82 @@ const Papers = () => {
                 </header>
             </div>
 
-            {loading && page === 1 ? (
-                <div className="text-lg mt-24 text-center text-text-secondary">
-                    Loading...
-                </div>
-            ) : error ? (
-                <div className="text-center mt-24 text-red-500">
-                    {error}
-                </div>
-            ) : (
-                <div>
-                    <ul className="list-none p-0">
-                        {papers.map((paper, index) => (
-                            <li key={index} className="mb-2">
-                                <JsonViewer jsonData={paper} />
-                            </li>
-                        ))}
-                    </ul>
-                    {loading && page > 1 && (
-                        <div className="text-center mt-4 text-text-secondary">
-                            Loading more...
-                        </div>
-                    )}
-                </div>
-            )}
+            <AnimatePresence>
+                {loading && page === 1 ? (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="text-lg mt-24 text-center text-text-secondary"
+                    >
+                        Loading...
+                    </motion.div>
+                ) : query === '' ? (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="text-lg mt-24 text-center text-text-secondary"
+                    >
+                        {query ? "No results found. Try a different search term." : "Enter a keyword to search for papers."}
+                    </motion.div>
+                ) : error ? (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="text-center mt-24 text-red-500"
+                    >
+                        {error}
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <ul className="list-none p-0">
+                            <AnimatePresence>
+                                {papers.map((paper, index) => (
+                                    <motion.li
+                                        key={index}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                                        className="mb-2"
+                                    >
+                                        <JsonViewer jsonData={paper} />
+                                    </motion.li>
+                                ))}
+                            </AnimatePresence>
+                        </ul>
+                        {loading && page > 1 && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="text-center mt-4 text-text-secondary"
+                            >
+                                Loading more...
+                            </motion.div>
+                        )}
+                        {!loading && !hasMore && papers.length > 0 && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="text-center mt-4 text-text-secondary"
+                            >
+                                No more results to load.
+                            </motion.div>
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
 
 export default Papers;
+

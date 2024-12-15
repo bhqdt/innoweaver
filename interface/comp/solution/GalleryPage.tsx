@@ -114,7 +114,7 @@ const GalleryPage = ({ title, fetchData }) => {
     }, [handleLoadSolution, isFetching, hasMore]);
 
     return (
-        <div className='user_history_content_container'>
+        <div className='user_history_content_container h-full'>
             <h1 style={{
                 fontSize: '1.5rem', fontWeight: 'bold', marginTop: '2.5rem',
                 alignSelf: 'flex-start',
