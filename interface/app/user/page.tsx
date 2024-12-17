@@ -49,12 +49,23 @@ const AuthButtons = ({ onLogout }) => (
   </div>
 );
 
+// 自定义通知框组件
+const Notification = ({ message, onClose }) => (
+  <div className="bg-blue-500 p-4 rounded-lg shadow-md text-white">
+    {message}
+    <button className="float-right" onClick={onClose}>
+      Close
+    </button>
+  </div>
+);
+
 // 主页面组件
 const UserPage = () => {
   const [apiKey, setApiKey] = useState('');
   const [user, setUser] = useState(null);
   const authStore = useAuthStore();
   const [isMounted, setIsMounted] = useState(false);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     setIsMounted(true); // 延迟渲染
@@ -80,7 +91,10 @@ const UserPage = () => {
   const handleApiKeyChange = (newApiKey) => setApiKey(newApiKey);
 
   const handleSaveApiKey = () => {
-    alert('API Key saved!');
+    setNotification('API Key saved!');
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000); // 3秒后自动关闭通知
   };
 
   return (
@@ -93,6 +107,9 @@ const UserPage = () => {
         <ApiKeySection apiKey={apiKey} onApiKeyChange={handleApiKeyChange} onSave={handleSaveApiKey} />
         <AuthButtons onLogout={handleLogout} />
       </div>
+
+      {/* 显示通知框 */}
+      {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
     </div>
   );
 };

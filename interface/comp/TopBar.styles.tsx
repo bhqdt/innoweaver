@@ -1,6 +1,27 @@
 import styled from 'styled-components';
 import { Container, Row, Col, Button } from 'react-bootstrap';
 
+export const Notification = styled.div`
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  color: #fff;
+  background-color: #4CAF50;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1000;
+`;
+
+export const NotificationClose = styled.button`
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  float: right;
+`;
+
 // export const TopBarWrapper = styled.div`
 export const TopBarWrapper = styled.div`
     position: fixed;

@@ -353,3 +353,33 @@ html {
   scrollbar-width: auto;
   scrollbar-color: #888 #333333;
 }
+
+.notification-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.notification {
+  padding: 10px 20px;
+  border-radius: 5px;
+  color: #fff;
+  background-color: #4CAF50;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notification.error {
+  background-color: #f44336;
+}
+
+.notification button {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+}

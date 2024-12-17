@@ -1,3 +1,4 @@
+// taskActions.tsx
 import { customFetch } from '@/lib/actions/customFetch';
 import useAuthStore from '@/lib/hooks/auth-store';
 
@@ -19,11 +20,24 @@ function handleAbort(controller) {
     return new AbortController();
 }
 
+// 浏览器通知函数
+async function showNotification(message, title = 'Notification') {
+    if (Notification.permission === 'granted') {
+        new Notification(title, { body: message });
+    } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then((permission) => {
+            if (permission === 'granted') {
+                new Notification(title, { body: message });
+            }
+        });
+    }
+}
+
 // 知识提取
 export async function fetchKnowledgeExtraction(paper) {
     const apiKey = getApiKey();
     if (!apiKey) {
-        alert("请设置 API-KEY。");
+        showNotification("请设置 API-KEY。");
         return null;
     }
 
@@ -48,7 +62,7 @@ export async function fetchKnowledgeExtraction(paper) {
 export async function fetchQueryAnalysis(query, designDoc) {
     const apiKey = getApiKey();
     if (!apiKey) {
-        alert("请设置 API-KEY。");
+        showNotification("请设置 API-KEY。");
         return null;
     }
 
@@ -74,7 +88,7 @@ export async function fetchComplete(queryAnalysisResult) {
     console.log(queryAnalysisResult);
     const apiKey = getApiKey();
     if (!apiKey) {
-        alert("请设置 API-KEY。");
+        showNotification("请设置 API-KEY。");
         return null;
     }
 
@@ -118,5 +132,3 @@ export async function fetchSetAPIKey(api_key: string) {
         throw new Error(`Failed to fetch API-Key set: ${error.message}`);
     }
 }
-
-// --------------------------------------------------------------------

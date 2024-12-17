@@ -8,6 +8,27 @@
     to { transform: translateX(0); }
 }
 
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    color: #fff;
+    background-color: #4CAF50;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 1000;
+  }
+  
+  .notification-close {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    float: right;
+  }
+
 .top-bar-wrapper {
     @apply fixed w-[12.5rem] h-screen bg-primary z-[1000] flex flex-col justify-start items-start text-text-primary left-0 top-0 transition-all duration-300 pl-4;
     /* position: fixed;
